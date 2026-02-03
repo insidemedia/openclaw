@@ -3,28 +3,27 @@ services:
     image: ghcr.io/openclaw/openclaw:latest
     container_name: openclaw
     restart: always
-    # THE FIX: Run as Administrator so we can definitely read the config
     user: "root"
 
     environment:
       - NODE_ENV=production
-      # Revert to root path
-      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
+      # We removed the config path so it uses the default
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
     volumes:
-      # Revert to root path
-      - ./openclaw.json:/root/.openclaw/config/openclaw.json
-
+      # We removed the manual file mount.
+      # The Wizard will write the new config into this volume automatically:
       - openclaw-data:/root/.openclaw
+
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
-
     ports:
+      # Map BOTH ports to be safe
       - "3000:3000"
+      - "18789:18789"
 
-    command: [ "node", "dist/index.js", "gateway" ]
+    # THE MAGIC FLAG: This tells it "I know I have no config, let me in!"
+    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
 
 volumes:
   openclaw-data:
