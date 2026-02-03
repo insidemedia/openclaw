@@ -8,22 +8,19 @@ services:
     environment:
       - NODE_ENV=production
 
-      # 1. API Keys
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # 1. THE AUTH FIX: Use the exact name the error asked for
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
 
-      # 2. Auth Configuration (Use Variables instead of File)
-      - OPENCLAW_GATEWAY__AUTH__MODE=token
-      - OPENCLAW_GATEWAY__AUTH__TOKEN=${OPENCLAW_TOKEN}
-
-      # 3. Network Configuration
+      # 2. Network: Listen on all interfaces
       - OPENCLAW_GATEWAY__BIND=0.0.0.0
 
-      # 4. THE FIX: Allow Insecure HTTP (So you can click the link!)
+      # 3. Security: Allow "Insecure" HTTP (So you can click the link)
       - OPENCLAW_GATEWAY__CONTROL_UI__ALLOW_INSECURE_AUTH=true
 
-      # 5. Model Configuration
+      # 4. Model: Force Gemini Flash
       - OPENCLAW_MODEL__PRIMARY=google/gemini-1.5-flash-latest
       - OPENCLAW_MODEL__API_KEY=${GEMINI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
 
     volumes:
       - openclaw-data:/root/.openclaw
@@ -32,11 +29,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
-      # Map 3000 to the container's default 18789
+      # Map 3000 to internal 18789
       - "3000:18789"
 
-    # 6. Start with --allow-unconfigured to bypass the file check
-    # The Env Vars above will take precedence over the "missing" file.
+    # Start without a config file, relying on the variables above
     command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
 
 volumes:
