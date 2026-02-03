@@ -7,20 +7,8 @@ services:
 
     environment:
       - NODE_ENV=production
-
-      # 1. THE AUTH FIX: Use the exact name the error asked for
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
-
-      # 2. Network: Listen on all interfaces
-      - OPENCLAW_GATEWAY__BIND=0.0.0.0
-
-      # 3. Security: Allow "Insecure" HTTP (So you can click the link)
-      - OPENCLAW_GATEWAY__CONTROL_UI__ALLOW_INSECURE_AUTH=true
-
-      # 4. Model: Force Gemini Flash
-      - OPENCLAW_MODEL__PRIMARY=google/gemini-1.5-flash-latest
-      - OPENCLAW_MODEL__API_KEY=${GEMINI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
 
     volumes:
       - openclaw-data:/root/.openclaw
@@ -29,11 +17,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
-      # Map 3000 to internal 18789
+      # Map Host 3000 -> Container 18789
       - "3000:18789"
 
-    # Start without a config file, relying on the variables above
-    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
+    # THE IRONCLAD FIX:
+    # --allow-unconfigured: Starts without a config file
+    # --bind lan: Forces listening on 0.0.0.0 (REQUIRED for Docker)
+    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured", "--bind", "lan" ]
 
 volumes:
   openclaw-data:
