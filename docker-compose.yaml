@@ -7,22 +7,21 @@ services:
 
     environment:
       - NODE_ENV=production
-      # We removed the config path so it uses the default
+      # Remove OPENCLAW_CONFIG to let it find the default path
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
-      # We removed the manual file mount.
-      # The Wizard will write the new config into this volume automatically:
+      # Mount the volume to the DEFAULT location for the 'root' user
       - openclaw-data:/root/.openclaw
 
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      # Map BOTH ports to be safe
+      # Map BOTH ports to be absolutely sure we catch it
       - "3000:3000"
       - "18789:18789"
 
-    # THE MAGIC FLAG: This tells it "I know I have no config, let me in!"
+    # THE FIX from the Troubleshooting Guide:
     command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
 
 volumes:
