@@ -1,0 +1,21 @@
+{
+    "general": {
+        "workspacePath": "/workspace",
+        "expertMode": true,
+        "timezone": "America/Chicago"
+    },
+    "gateway": {
+        "bind": "0.0.0.0",
+        "auth": {
+            "mode": "token",
+            "token": "${OPENCLAW_TOKEN}"
+        }
+    },
+    "server": {
+        "port": 3000
+    },
+    "model": {
+        "primary": "google/gemini-1.5-flash-latest",
+        "apiKey": "${GEMINI_API_KEY}"
+    }
+}
