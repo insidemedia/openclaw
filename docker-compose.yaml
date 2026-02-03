@@ -1,0 +1,29 @@
+services:
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: always
+    environment:
+      - NODE_ENV=production
+      # Tells OpenClaw where the "Brain" config is
+      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
+      # Pass the Gemini Key
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      # Persistence for the "Brain" config
+      - openclaw-data:/root/.openclaw
+      # Persistence for the agent's work files
+      - openclaw-workspace:/workspace
+      # System time sync
+      - /etc/localtime:/etc/localtime:ro
+      # Direct Docker access (The agent's "Hands")
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      # Binds HOST port 3000 to CONTAINER port 3000.
+      # Essential for Tailscale visibility.
+      - "3000:3000"
+    command: [ "start", "--no-interactive" ]
+
+volumes:
+  openclaw-data:
+  openclaw-workspace:
