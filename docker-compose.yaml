@@ -7,11 +7,9 @@ services:
 
     environment:
       - NODE_ENV=production
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
+      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-
-      # THE FIX: Disable the HTTPS requirement
-      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOW_INSECURE_AUTH=true
+      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
 
     volumes:
       - openclaw-data:/root/.openclaw
@@ -19,9 +17,15 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "3000:18789"
+      # Map standard port 3000
+      - "3000:3000"
 
-    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured", "--bind", "lan" ]
+    # THE SCRIPT:
+    # 1. Deletes old config (rm -rf)
+    # 2. Writes new config with "allowInsecureAuth": true
+    # 3. Starts the agent
+    command: >
+      sh -c " rm -rf /root/.openclaw/config/openclaw.json && mkdir -p /root/.openclaw/config && echo '{\"general\":{\"workspacePath\":\"/workspace\",\"expertMode\":true,\"timezone\":\"America/Chicago\"},\"gateway\":{\"bind\":\"0.0.0.0\",\"controlUi\":{\"allowInsecureAuth\":true},\"auth\":{\"mode\":\"token\",\"token\":\"'$OPENCLAW_TOKEN'\"}},\"server\":{\"port\":3000},\"model\":{\"primary\":\"google/gemini-1.5-flash-latest\",\"apiKey\":\"'$GEMINI_API_KEY'\"}}' > /root/.openclaw/config/openclaw.json && node dist/index.js gateway "
 
 volumes:
   openclaw-data:
