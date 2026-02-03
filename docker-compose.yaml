@@ -5,21 +5,21 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
-      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
-      # Pass the Variables
+      # UPDATE 1: Point to the correct user home directory
+      - OPENCLAW_CONFIG=/home/node/.openclaw/config/openclaw.json
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
     volumes:
-      # THE MAGIC LINE: Mount the local file into the container
-      - ./openclaw.json:/root/.openclaw/config/openclaw.json
+      # UPDATE 2: Mount the file to the 'node' user's folder
+      - ./openclaw.json:/home/node/.openclaw/config/openclaw.json
 
-      - openclaw-data:/root/.openclaw
+      - openclaw-data:/home/node/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "3000:3000"
-    # We explicitly tell Node which file to run to avoid the "Module not found" error
+    # Keep this command as it is
     command: [ "node", "dist/index.js", "gateway" ]
 
 volumes:
