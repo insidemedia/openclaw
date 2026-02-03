@@ -7,21 +7,20 @@ services:
 
     environment:
       - NODE_ENV=production
-      # Remove OPENCLAW_CONFIG to let it find the default path
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-    volumes:
-      # Mount the volume to the DEFAULT location for the 'root' user
-      - openclaw-data:/root/.openclaw
 
+      # THE FIX: Pass the token using the EXACT name the error asked for
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
+    volumes:
+      - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      # Map BOTH ports to be absolutely sure we catch it
       - "3000:3000"
       - "18789:18789"
 
-    # THE FIX from the Troubleshooting Guide:
+    # Keep this to bypass the "Missing Config" check
     command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
 
 volumes:
