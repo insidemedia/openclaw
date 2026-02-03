@@ -7,25 +7,37 @@ services:
 
     environment:
       - NODE_ENV=production
-      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
+
+      # 1. API Keys
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
+
+      # 2. Auth Configuration (Use Variables instead of File)
+      - OPENCLAW_GATEWAY__AUTH__MODE=token
+      - OPENCLAW_GATEWAY__AUTH__TOKEN=${OPENCLAW_TOKEN}
+
+      # 3. Network Configuration
+      - OPENCLAW_GATEWAY__BIND=0.0.0.0
+
+      # 4. THE FIX: Allow Insecure HTTP (So you can click the link!)
+      - OPENCLAW_GATEWAY__CONTROL_UI__ALLOW_INSECURE_AUTH=true
+
+      # 5. Model Configuration
+      - OPENCLAW_MODEL__PRIMARY=google/gemini-1.5-flash-latest
+      - OPENCLAW_MODEL__API_KEY=${GEMINI_API_KEY}
 
     volumes:
       - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      # Map standard port 3000
-      - "3000:3000"
 
-    # THE SCRIPT:
-    # 1. Deletes old config (rm -rf)
-    # 2. Writes new config with "allowInsecureAuth": true
-    # 3. Starts the agent
-    command: >
-      sh -c " rm -rf /root/.openclaw/config/openclaw.json && mkdir -p /root/.openclaw/config && echo '{\"general\":{\"workspacePath\":\"/workspace\",\"expertMode\":true,\"timezone\":\"America/Chicago\"},\"gateway\":{\"bind\":\"0.0.0.0\",\"controlUi\":{\"allowInsecureAuth\":true},\"auth\":{\"mode\":\"token\",\"token\":\"'$OPENCLAW_TOKEN'\"}},\"server\":{\"port\":3000},\"model\":{\"primary\":\"google/gemini-1.5-flash-latest\",\"apiKey\":\"'$GEMINI_API_KEY'\"}}' > /root/.openclaw/config/openclaw.json && node dist/index.js gateway "
+    ports:
+      # Map 3000 to the container's default 18789
+      - "3000:18789"
+
+    # 6. Start with --allow-unconfigured to bypass the file check
+    # The Env Vars above will take precedence over the "missing" file.
+    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
 
 volumes:
   openclaw-data:
