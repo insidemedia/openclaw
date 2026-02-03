@@ -8,13 +8,12 @@ services:
     environment:
       - NODE_ENV=production
       - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
-      # Pass your variables here
+      # Pass your variables
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
       - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
     volumes:
-      # CRITICAL: We REMOVED the broken './openclaw.json' mount.
-      # We only keep the persistent data volume:
+      # Keep persistent data
       - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
@@ -22,12 +21,9 @@ services:
     ports:
       - "3000:3000"
 
-    # THE MAGIC SCRIPT
-    # 1. Creates the folder
-    # 2. Writes the JSON config using your Env Vars
-    # 3. Starts the Gateway
+    # THE FIX: Added 'rm -rf' to delete the bad directory before writing the file
     command: >
-      sh -c " mkdir -p /root/.openclaw/config && echo '{\"general\":{\"workspacePath\":\"/workspace\",\"expertMode\":true,\"timezone\":\"America/Chicago\"},\"gateway\":{\"bind\":\"0.0.0.0\",\"auth\":{\"mode\":\"token\",\"token\":\"'$OPENCLAW_TOKEN'\"}},\"server\":{\"port\":3000},\"model\":{\"primary\":\"google/gemini-1.5-flash-latest\",\"apiKey\":\"'$GEMINI_API_KEY'\"}}' > /root/.openclaw/config/openclaw.json && node dist/index.js gateway "
+      sh -c " rm -rf /root/.openclaw/config/openclaw.json && mkdir -p /root/.openclaw/config && echo '{\"general\":{\"workspacePath\":\"/workspace\",\"expertMode\":true,\"timezone\":\"America/Chicago\"},\"gateway\":{\"bind\":\"0.0.0.0\",\"auth\":{\"mode\":\"token\",\"token\":\"'$OPENCLAW_TOKEN'\"}},\"server\":{\"port\":3000},\"model\":{\"primary\":\"google/gemini-1.5-flash-latest\",\"apiKey\":\"'$GEMINI_API_KEY'\"}}' > /root/.openclaw/config/openclaw.json && node dist/index.js gateway "
 
 volumes:
   openclaw-data:
