@@ -7,11 +7,16 @@ services:
 
     environment:
       - NODE_ENV=production
+      # Point to the config file
+      - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
+      # Pass the secrets
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
-      # THE FIX: Pass the token using the EXACT name the error asked for
-      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
+      - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
     volumes:
+      # Mount the config file (This works now because we are Root!)
+      - ./openclaw.json:/root/.openclaw/config/openclaw.json
+
       - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
@@ -20,8 +25,8 @@ services:
       - "3000:3000"
       - "18789:18789"
 
-    # Keep this to bypass the "Missing Config" check
-    command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured" ]
+    # Run normally (without the unconfigured flag)
+    command: [ "node", "dist/index.js", "gateway" ]
 
 volumes:
   openclaw-data:
