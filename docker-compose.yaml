@@ -19,7 +19,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "3000:3000"
-    command: [ "start", "--no-interactive" ]
+    # We explicitly tell Node which file to run to avoid the "Module not found" error
+    command: [ "node", "dist/index.js", "gateway", "--no-interactive" ]
 
 volumes:
   openclaw-data:
