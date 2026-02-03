@@ -7,26 +7,27 @@ services:
 
     environment:
       - NODE_ENV=production
-      # Point to the config file
       - OPENCLAW_CONFIG=/root/.openclaw/config/openclaw.json
-      # Pass the secrets
+      # Pass your variables here
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
       - OPENCLAW_TOKEN=${OPENCLAW_TOKEN}
     volumes:
-      # Mount the config file (This works now because we are Root!)
-      - ./openclaw.json:/root/.openclaw/config/openclaw.json
-
+      # CRITICAL: We REMOVED the broken './openclaw.json' mount.
+      # We only keep the persistent data volume:
       - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "3000:3000"
-      - "18789:18789"
 
-    # Run normally (without the unconfigured flag)
-    command: [ "node", "dist/index.js", "gateway" ]
+    # THE MAGIC SCRIPT
+    # 1. Creates the folder
+    # 2. Writes the JSON config using your Env Vars
+    # 3. Starts the Gateway
+    command: >
+      sh -c " mkdir -p /root/.openclaw/config && echo '{\"general\":{\"workspacePath\":\"/workspace\",\"expertMode\":true,\"timezone\":\"America/Chicago\"},\"gateway\":{\"bind\":\"0.0.0.0\",\"auth\":{\"mode\":\"token\",\"token\":\"'$OPENCLAW_TOKEN'\"}},\"server\":{\"port\":3000},\"model\":{\"primary\":\"google/gemini-1.5-flash-latest\",\"apiKey\":\"'$GEMINI_API_KEY'\"}}' > /root/.openclaw/config/openclaw.json && node dist/index.js gateway "
 
 volumes:
   openclaw-data:
