@@ -3,29 +3,24 @@ services:
     image: ghcr.io/openclaw/openclaw:latest
     container_name: openclaw
     restart: always
-    # 1. Run as Root to ensure the Wizard can save your settings later
     user: "root"
 
     environment:
       - NODE_ENV=production
-      # 2. Pass the token so it doesn't complain about security
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_TOKEN}
-      # 3. Pass the API Key for when you set up the model
       - GEMINI_API_KEY=${GEMINI_API_KEY}
 
+      # THE FIX: Disable the HTTPS requirement
+      - OPENCLAW_GATEWAY_CONTROL_UI_ALLOW_INSECURE_AUTH=true
+
     volumes:
-      # Persistent storage for when the Wizard saves your config
       - openclaw-data:/root/.openclaw
       - openclaw-workspace:/workspace
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      # 4. Map Host Port 3000 -> Container Default 18789
       - "3000:18789"
 
-    # 5. THE WINNING COMMAND:
-    # --allow-unconfigured: Starts without a config file
-    # --bind lan: Forces it to listen on 0.0.0.0 (so Tailscale sees it)
     command: [ "node", "dist/index.js", "gateway", "--allow-unconfigured", "--bind", "lan" ]
 
 volumes:
