@@ -92,18 +92,6 @@ function resolveCronDeliveryBestEffort(job: CronJob): boolean {
   return false;
 }
 
-function resolveCronDeliveryFailure(
-  resolved: Awaited<ReturnType<typeof resolveDeliveryTarget>>,
-): Error | undefined {
-  if (resolved.error) {
-    return resolved.error;
-  }
-  if (!resolved.to) {
-    return new Error("cron delivery target is missing");
-  }
-  return undefined;
-}
-
 export type RunCronAgentTurnResult = {
   status: "ok" | "error" | "skipped";
   summary?: string;
@@ -244,7 +232,10 @@ export async function runCronIsolatedAgentTurn(params: {
     });
   }
   if (thinkLevel === "xhigh" && !supportsXHighThinking(provider, model)) {
-    throw new Error(`Thinking level "xhigh" is only supported for ${formatXHighModelHint()}.`);
+    logWarn(
+      `[cron:${params.job.id}] Thinking level "xhigh" is not supported for ${provider}/${model}; downgrading to "high".`,
+    );
+    thinkLevel = "high";
   }
 
   const timeoutMs = resolveAgentTimeoutMs({
@@ -460,17 +451,29 @@ export async function runCronIsolatedAgentTurn(params: {
     );
 
   if (deliveryRequested && !skipHeartbeatDelivery && !skipMessagingToolDelivery) {
-    const deliveryFailure = resolveCronDeliveryFailure(resolvedDelivery);
-    if (deliveryFailure) {
+    if (resolvedDelivery.error) {
       if (!deliveryBestEffort) {
         return {
           status: "error",
-          error: deliveryFailure.message,
+          error: resolvedDelivery.error.message,
           summary,
           outputText,
         };
       }
-      logWarn(`[cron:${params.job.id}] ${deliveryFailure.message}`);
+      logWarn(`[cron:${params.job.id}] ${resolvedDelivery.error.message}`);
+      return { status: "ok", summary, outputText };
+    }
+    if (!resolvedDelivery.to) {
+      const message = "cron delivery target is missing";
+      if (!deliveryBestEffort) {
+        return {
+          status: "error",
+          error: message,
+          summary,
+          outputText,
+        };
+      }
+      logWarn(`[cron:${params.job.id}] ${message}`);
       return { status: "ok", summary, outputText };
     }
     try {
